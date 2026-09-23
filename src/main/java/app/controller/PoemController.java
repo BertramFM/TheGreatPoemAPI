@@ -84,6 +84,7 @@ public class PoemController {
         PoemNoIdDTO updatedPoem = ctx.bodyAsClass(PoemNoIdDTO.class);
         Poem updatePoem = new Poem(poem.getId(), updatedPoem.title(), updatedPoem.content(), updatedPoem.author());
         poemDAO.update(updatePoem);
+        ctx.status(200).json(updatePoem);
     }
 
     public void deletePoem(Context ctx) {

@@ -1,0 +1,35 @@
+GET localhost:7070/api/v1/poem
+Accept: application/json
+
+###
+
+GET localhost:7070/api/v1/poem/2
+Accept: application/json
+
+
+###
+
+POST localhost:7070/api/v1/poem
+Content-Type: application/json
+
+{
+  "title": "Morning Dew",
+  "content": "First light on the grass Tiny drop of water shines Day is born anew",
+  "author": "Traditional"
+}
+
+###
+
+PUT localhost:7070/api/v1/poem/2
+Content-Type: application/json
+
+{
+  "title": "Morning Dew 2",
+  "content": "A gentle spring rain Washing green leaves on the branch Earth smells sweet and fresh",
+  "author": "Spring Rain"
+}
+
+###
+
+DELETE localhost:7070/api/v1/poem/4
+Accept: application/json

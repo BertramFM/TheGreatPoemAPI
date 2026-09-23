@@ -1,0 +1,99 @@
+package app.controller;
+
+import app.daos.PoemDAO;
+import app.dtos.PoemNoIdDTO;
+import app.dtos.PoemsDTO;
+import app.entities.Poem;
+import io.javalin.http.Context;
+import jakarta.persistence.EntityManagerFactory;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
+
+public class PoemController {
+    private final List<PoemsDTO> poems = new ArrayList<>();
+    PoemDAO poemDAO;
+    PoemNoIdDTO poemNoIdDTO;
+
+    public PoemController(EntityManagerFactory emf){
+        poemDAO = new PoemDAO(emf);
+    }
+
+    public void populateDatabase(){
+        List<PoemNoIdDTO> poemsToCreate = new ArrayList<>(List.of(
+                new PoemNoIdDTO("The Old Pond", "Old pond A frog jumps into the water Sound of the splash", "Matsuo Basho"),
+                new PoemNoIdDTO("Spring Rain", "A gentle spring rain Washing green leaves on the branch Earth smells sweet and fresh", "Traditional"),
+                new PoemNoIdDTO("Summer Breeze", "Cool wind in the trees Leaves dance in the golden light Day begins to fade", "Traditional"),
+                new PoemNoIdDTO("Autumn Moon", "Bright moon in the skySilver light upon the ground Night is calm and still", "Traditional"),
+                new PoemNoIdDTO("Winter Snow", "White snow falls on pine Silent world in ice and cold Rest till winter ends", "Traditional")
+        ));
+
+        for (PoemNoIdDTO dto : poemsToCreate) {
+            Poem poem = Poem.builder()
+                    .title(dto.title())
+                    .content(dto.content())
+                    .author(dto.author())
+                    .build();
+            poemDAO.create(poem);
+        }
+    }
+
+    public void getAllPoems(Context ctx){
+        List<Poem> poems = poemDAO.getAll();
+        ctx.json(poems);
+    }
+
+    public void getPoemById(Context ctx){
+        int id = Integer.parseInt(ctx.pathParam("id"));
+        Poem poem = poemDAO.getById(id);
+        if (poem == null) {
+            ctx.status(404);
+            ctx.json("Poem not found");
+            return;
+        }
+        ctx.json(poem);
+    }
+
+    public void createPoem(Context ctx){
+        PoemNoIdDTO poem = ctx.bodyAsClass(PoemNoIdDTO.class);
+
+        if (poem == null) {
+            ctx.status(400);
+            ctx.json("Poem is required");
+            return;
+        }
+
+        Poem newPoem = Poem.builder()
+                .title(poem.title())
+                .content(poem.content())
+                .author(poem.author())
+                .build();
+        poemDAO.create(newPoem);
+        ctx.status(201);
+        ctx.json(newPoem);
+    }
+
+    public void updatePoem(Context ctx){
+        int id = Integer.parseInt(ctx.pathParam("id"));
+        Poem poem = poemDAO.getById(id);
+        if (poem == null) {
+            ctx.status(404);
+            ctx.json("Poem not found");
+            return;
+        }
+        PoemNoIdDTO updatedPoem = ctx.bodyAsClass(PoemNoIdDTO.class);
+        Poem updatePoem = new Poem(poem.getId(), updatedPoem.title(), updatedPoem.content(), updatedPoem.author());
+        poemDAO.update(updatePoem);
+    }
+
+    public void deletePoem(Context ctx) {
+        int id = Integer.parseInt(ctx.pathParam("id"));
+        if (poemDAO.getById(id) == null) {
+            ctx.status(404);
+            ctx.json("Poem not found");
+            return;
+        }
+        poemDAO.delete(id);
+        ctx.status(200).json("Poem deleted");
+    }
+}

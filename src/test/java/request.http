@@ -1,13 +1,15 @@
+### hent alle
+
 GET localhost:7070/api/v1/poem
 Accept: application/json
 
-###
+### hent med id
 
 GET localhost:7070/api/v1/poem/2
 Accept: application/json
 
 
-###
+### create
 
 POST localhost:7070/api/v1/poem
 Content-Type: application/json
@@ -18,7 +20,7 @@ Content-Type: application/json
   "author": "Traditional"
 }
 
-###
+### update
 
 PUT localhost:7070/api/v1/poem/2
 Content-Type: application/json
@@ -29,7 +31,7 @@ Content-Type: application/json
   "author": "Spring Rain"
 }
 
-###
+### slet med id
 
 DELETE localhost:7070/api/v1/poem/4
 Accept: application/json

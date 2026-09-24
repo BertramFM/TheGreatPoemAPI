@@ -6,20 +6,21 @@ import app.dtos.PoemsDTO;
 import app.entities.Poem;
 import io.javalin.http.Context;
 import jakarta.persistence.EntityManagerFactory;
-import org.jetbrains.annotations.NotNull;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
+@Slf4j
 public class PoemController {
     private final List<PoemsDTO> poems = new ArrayList<>();
     PoemDAO poemDAO;
     PoemNoIdDTO poemNoIdDTO;
 
-    public PoemController(EntityManagerFactory emf){
+    public PoemController(EntityManagerFactory emf) {
         poemDAO = new PoemDAO(emf);
     }
 
-    public void populateDatabase(){
+    public void populateDatabase() {
         List<PoemNoIdDTO> poemsToCreate = new ArrayList<>(List.of(
                 new PoemNoIdDTO("The Old Pond", "Old pond A frog jumps into the water Sound of the splash", "Matsuo Basho"),
                 new PoemNoIdDTO("Spring Rain", "A gentle spring rain Washing green leaves on the branch Earth smells sweet and fresh", "Traditional"),
@@ -38,13 +39,19 @@ public class PoemController {
         }
     }
 
-    public void getAllPoems(Context ctx){
+    public void getAllPoems(Context ctx) {
         List<Poem> poems = poemDAO.getAll();
         ctx.json(poems);
+        log.info("All poems retrieved");
     }
 
-    public void getPoemById(Context ctx){
-        int id = Integer.parseInt(ctx.pathParam("id"));
+    public void getPoemById(Context ctx) {
+        // int id = Integer.parseInt(ctx.pathParam("id"));
+        int id = ctx.pathParamAsClass("id", Integer.class)
+                .check(value -> value > 0, "ID must be positive")
+                .get();
+
+
         Poem poem = poemDAO.getById(id);
         if (poem == null) {
             ctx.status(404);
@@ -54,7 +61,7 @@ public class PoemController {
         ctx.json(poem);
     }
 
-    public void createPoem(Context ctx){
+    public void createPoem(Context ctx) {
         PoemNoIdDTO poem = ctx.bodyAsClass(PoemNoIdDTO.class);
 
         if (poem == null) {
@@ -73,8 +80,12 @@ public class PoemController {
         ctx.json(newPoem);
     }
 
-    public void updatePoem(Context ctx){
-        int id = Integer.parseInt(ctx.pathParam("id"));
+    public void updatePoem(Context ctx) {
+        // int id = Integer.parseInt(ctx.pathParam("id"));
+        int id = ctx.pathParamAsClass("id", Integer.class)
+                .check(value -> value > 0, "ID must be positive")
+                .get();
+
         Poem poem = poemDAO.getById(id);
         if (poem == null) {
             ctx.status(404);
@@ -92,9 +103,11 @@ public class PoemController {
         if (poemDAO.getById(id) == null) {
             ctx.status(404);
             ctx.json("Poem not found");
+            log.info("Poem with id {} not found", id);
             return;
         }
         poemDAO.delete(id);
         ctx.status(200).json("Poem deleted");
+        log.info("Poem with id {} deleted", id);
     }
 }

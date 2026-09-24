@@ -37,6 +37,7 @@ public class PoemController {
                     .build();
             poemDAO.create(poem);
         }
+        log.info("Database populated with {} poems", poemsToCreate.size());
     }
 
     public void getAllPoems(Context ctx) {
@@ -51,24 +52,28 @@ public class PoemController {
                 .check(value -> value > 0, "ID must be positive")
                 .get();
 
-
         Poem poem = poemDAO.getById(id);
         if (poem == null) {
             ctx.status(404);
             ctx.json("Poem not found");
+            log.info("Poem with id {} not found", id);
             return;
         }
         ctx.json(poem);
     }
 
     public void createPoem(Context ctx) {
-        PoemNoIdDTO poem = ctx.bodyAsClass(PoemNoIdDTO.class);
+        PoemNoIdDTO poem = ctx.bodyValidator(PoemNoIdDTO.class)
+                .check(p -> p.title() != null && !p.title().isBlank(), "Title is required")
+                .check(p -> p.content() != null && !p.content().isBlank(), "Content is required")
+                .check(p -> p.author() != null && !p.author().isBlank(), "Author is required")
+                .get();
 
-        if (poem == null) {
-            ctx.status(400);
-            ctx.json("Poem is required");
-            return;
-        }
+//        if (poem == null) {
+//            ctx.status(400);
+//            ctx.json("Poem is required");
+//            return;
+//        }
 
         Poem newPoem = Poem.builder()
                 .title(poem.title())
@@ -76,6 +81,7 @@ public class PoemController {
                 .author(poem.author())
                 .build();
         poemDAO.create(newPoem);
+        log.info("Created new poem with id {}, and title {}", newPoem.getId(), newPoem.getTitle());
         ctx.status(201);
         ctx.json(newPoem);
     }
@@ -92,14 +98,32 @@ public class PoemController {
             ctx.json("Poem not found");
             return;
         }
-        PoemNoIdDTO updatedPoem = ctx.bodyAsClass(PoemNoIdDTO.class);
-        Poem updatePoem = new Poem(poem.getId(), updatedPoem.title(), updatedPoem.content(), updatedPoem.author());
+
+        PoemNoIdDTO updatedPoem = ctx.bodyValidator(PoemNoIdDTO.class)
+                .check(p -> p.title() != null && !p.title().isBlank(), "Title is required")
+                .check(p -> p.content() != null && !p.content().isBlank(), "Content is required")
+                .check(p -> p.author() != null && !p.author().isBlank(), "Author is required")
+                .get();
+
+        Poem updatePoem = Poem.builder()
+                        .id(poem.getId())
+                        .title(updatedPoem.title())
+                        .content(updatedPoem.content())
+                        .author(updatedPoem.author())
+                        .build();
+
         poemDAO.update(updatePoem);
+        log.info("Updated poem with id {} from Title: {} -> {} | Content: {} -> {} | Author {} -> {}",
+                updatePoem.getId(), poem.getTitle(), updatePoem.getTitle(),
+                poem.getContent(), updatePoem.getContent(), poem.getAuthor(), updatePoem.getAuthor());
         ctx.status(200).json(updatePoem);
     }
 
     public void deletePoem(Context ctx) {
-        int id = Integer.parseInt(ctx.pathParam("id"));
+        int id = ctx.pathParamAsClass("id", Integer.class)
+                .check(value -> value > 0, "ID must be positive")
+                .get();
+
         if (poemDAO.getById(id) == null) {
             ctx.status(404);
             ctx.json("Poem not found");
